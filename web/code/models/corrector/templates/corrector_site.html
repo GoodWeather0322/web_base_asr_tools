@@ -1,0 +1,37 @@
+{% extends "bootstrap/base.html" %}
+
+{% block metas %}
+{{ super() }}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+{% endblock %}
+
+{% block title %}聽寫器{% endblock %}
+
+{% block content %}
+
+<h2>corrector page</h2>
+
+<table id='table' width="20%" style="border:3px #cccccc solid;">
+    <tbody style="border:3px #cccccc solid;">
+        {% for date in date_list %}
+            <tr>
+                <td><a href="{{ site }}/{{ date }}""><h4>{{ date }}</h4></a></td>
+            </tr>
+            
+        {% endfor %}
+    </tbody>
+
+</table>
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    
+</script>
+{% endblock %}

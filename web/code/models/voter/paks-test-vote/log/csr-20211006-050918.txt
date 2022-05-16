@@ -1,0 +1,109 @@
+﻿Log file created at: 2021-10-06 05:09:18
+Running on machine: ced2ccea6fda
+Print the config file: kenkone_evas_v3.1.pak
+[MODEL]
+acmodel = /home/gary/models/kenkone_evas_v3.1/final.mdl
+graph = /home/gary/models/kenkone_evas_v3.1/HCLG.fst
+wordfile = /home/gary/models/kenkone_evas_v3.1/words.txt
+latticefile = 
+wordboundaryfile = 
+phonefile = /home/gary/models/kenkone_evas_v3.1/phones.txt
+filler = !SIL
+silence_label = 2
+[DECODER]
+acoustic_scale = 1
+beam = 15
+max_active = 7000
+min_active = 200
+lattice_beam = 6
+determinize_lattice = 1
+do_endpointing = 0
+online = 1
+chunk_length = 0.18
+nBest = 1
+frame_subsampling_factor = 3
+feature_type = mfcc
+word_ins_penalty = 0
+[MFCC]
+mfcc_num_ceps = 40
+mfcc_use_energy = 0
+mfcc_energy_floor = 0
+mfcc_raw_energy = 1
+mfcc_cepstral_lifter = 22
+mfcc_htk_compat = 0
+mfcc_num_bins = 40
+mfcc_low_freq = 20
+mfcc_high_freq = -400
+mfcc_vtln_low = 100
+mfcc_vtln_high = -500
+mfcc_samp_freq = 16000
+mfcc_frame_shift_ms = 10
+mfcc_frame_length_ms = 25
+mfcc_dither = 1
+mfcc_preemph_coeff = 0.97
+mfcc_remove_dc_offset = 1
+mfcc_window_type = povey
+mfcc_round_to_power_of_two = 1
+mfcc_snip_edges = 1
+[FBANK]
+fbank_use_energy = 0
+fbank_energy_floor = 0
+fbank_raw_energy = 1
+fbank_htk_compat = 0
+fbank_use_log_fbank = 1
+fbank_num_bins = 23
+fbank_low_freq = 20
+fbank_high_freq = 0
+fbank_vtln_low = 100
+fbank_vtln_high = -500
+fbank_samp_freq = 16000
+fbank_frame_shift_ms = 10
+fbank_frame_length_ms = 25
+fbank_dither = 1
+fbank_preemph_coeff = 0.97
+fbank_remove_dc_offset = 1
+fbank_window_type = povey
+fbank_round_to_power_of_two = 1
+fbank_snip_edges = 1
+[IVECTOR]
+use_ivector = 1
+global_cmvn_stats = /home/gary/models/kenkone_evas_v3.1/ivector_extractor/global_cmvn.stats
+lda_mat = /home/gary/models/kenkone_evas_v3.1/ivector_extractor/final.mat
+diag_ubm = /home/gary/models/kenkone_evas_v3.1/ivector_extractor/final.dubm
+ivector_extractor = /home/gary/models/kenkone_evas_v3.1/ivector_extractor/final.ie
+num-gselect = 5
+min-post = 0.025
+posterior-scale = 0.1
+max-remembered-frames = 1000
+max_count = 100
+cmn_window = 600
+global_frames = 200
+speaker_frames = 600
+norm_mean = 1
+norm_vars = 0
+left_context = 3
+right_context = 3
+[PITCH]
+use_pitch = 0
+pov_offset = 0
+[LM_RESCORE]
+lm_rescore1 = 0
+gfst1 = /home/gary/models/pak/16k/mdl7/G1.carpa
+am_scale1 = 10
+lm_scale1 = -1
+lm_rescore2 = 0
+gfst2 = /home/gary/models/pak/16k/mdl7/G2.carpa
+am_scale2 = 0.1
+lm_scale2 = 1
+[LOG]
+log_file_enable = 1
+log_tag = csr-
+log_console = 1
+log_dir = log
+log_level = 0
+[KWS]
+kws_enable = 0
+kws_keyword_ints = 
+[ITN]
+itn_enable = 0
+itn_rules = 

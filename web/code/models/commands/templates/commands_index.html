@@ -1,0 +1,59 @@
+{% extends "bootstrap/base.html" %}
+
+{% block metas %}
+{{ super() }}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+{% endblock %}
+
+{% block title %}指令統計{% endblock %}
+
+{% block content %}
+
+<h2>commands page</h2>
+
+<select name="selected_class" class="form-control" id="date_type">
+    <option value="" selected disabled hidden>Choose here</option>
+    <option value="1" >日</option>
+    <option value="2" >周</option>
+    <option value="3" >月</option>
+</select> 
+
+<!-- <h3 id="ttt">start</h3> -->
+
+<h3 id="ttime">總音檔時數: {{ total_time }} 小時</h3>
+<h3 id="tfile">總音檔數: {{ total_file }} 個</h3>
+
+<div class="content" id="chart">
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function(){
+        load_data();
+        function load_data(query='')
+        {
+            $.ajax({
+                method:"POST",
+                url: {{ url_for('.date_type')|tojson }},
+                data:{query:query},
+                success:function(data)
+                { 
+                    $('#ttt').text(data.test);
+                    $('#chart').html(data.myechart)
+                }
+            })
+        }
+    
+        $('#date_type').change(function(){
+            var query = $('#date_type').val(); 
+            // console.log(query)
+            load_data(query);
+        });
+        
+    });
+</script>
+{% endblock %}

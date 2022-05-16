@@ -1,0 +1,57 @@
+{% extends "bootstrap/base.html" %}
+
+{% block metas %}
+{{ super() }}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+    <style type="text/css">
+        table, th, td {
+            border: 1px solid black;
+            margin: 1px;
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block title %}投票date{% endblock %}
+
+
+
+{% block content %}
+
+{{ super() }}
+    <h1>投票date  {{ date }}</h1>
+    
+    <!-- <h2 id='ttt'>{{ date }}</h2> -->
+
+    <table>
+        <thead><tr><th>name</th><th>time</th><th>ref</th><th>hyp</th></tr></thead>
+        <tbody>
+            {% for name, time, ref, hyp in wav_list %}
+                <tr>
+                    <td><a href={{date}}/{{ name }}><h4>{{ name }}</h4></a></td>
+                    <td>{{ time }}</td>
+                    <td>{{ ref }}</td>
+                    <td>{{ hyp }}</td>
+                </tr>
+                
+            {% endfor %}
+        </tbody>
+    </table>
+
+    
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+
+</script>
+{% endblock %}

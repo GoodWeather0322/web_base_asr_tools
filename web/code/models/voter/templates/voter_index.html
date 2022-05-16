@@ -1,0 +1,74 @@
+{% extends "bootstrap/base.html" %}
+
+{% block metas %}
+{{ super() }}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+    <style type="text/css">
+        table, th, td {
+            border: 1px solid black;
+            margin: 1px;
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block title %}投票{% endblock %}
+
+
+
+{% block content %}
+
+{{ super() }}
+    <h1>投票</h1>
+    
+    <!-- <input class="btn btn-info btn-lg" id="btn_run" type="button" value="投票辨識率"> -->
+    <!-- <h2 id='ttt'>123</h2> -->
+
+    <table>
+        <thead><tr><th>date</th><th>音檔數</th><th>錯誤率</th></tr></thead>
+        <tbody>
+            {% for date, audio_count, error_rate in date_list %}
+                <tr>
+                    <td><a href={{ date }}><h4>{{ date }}</h4></a></td>
+                    <td>{{ audio_count }}</td>
+                    <td>{{ error_rate }}</td>
+                </tr>
+                
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+    $(document).ready(function(){
+        load_data();
+        function load_data()
+        {
+            $.ajax({
+                method:"POST",
+                url: {{ url_for('.do_click')|tojson }},
+                success:function(data)
+                { 
+                    $('#ttt').text(data.ttt);
+                }
+            })
+        }
+    
+        $('#btn_run').click(function(){
+            // console.log(query)
+            load_data();
+        });
+        
+    });
+</script>
+{% endblock %}

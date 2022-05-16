@@ -1,0 +1,20 @@
+{% extends "bootstrap/base.html" %}
+
+{% block metas %}
+{{ super() }}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+{% endblock %}
+
+{% block title %}Demo Home{% endblock %}
+
+{% block content %}
+
+<h2>test page 1</h2>
+<input class="btn btn-info btn-lg" type="button" value="音檔統計" onclick="window.location.href='{{ url_for('commands.index') }}'">
+<input class="btn btn-info btn-lg" type="button" value="投票辨識率" onclick="window.location.href='{{ url_for('voter.index') }}'">
+<input class="btn btn-info btn-lg" type="button" value="聽寫器" onclick="window.location.href='{{ url_for('corrector.index') }}'">
+<input class="btn btn-info btn-lg" type="button" value="錄音器" onclick="window.location.href='{{ url_for('recorder.index') }}'">
+
+
+{% endblock %}

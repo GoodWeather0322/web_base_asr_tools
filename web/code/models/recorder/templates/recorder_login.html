@@ -1,0 +1,379 @@
+{% extends "bootstrap/base.html" %}
+
+{% block metas %}
+{{ super() }}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+<link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}">
+{% endblock %}
+{% block head %} 
+{{ super() }}
+    <script src="https://www.WebRTC-Experiment.com/RecordRTC.js"></script>
+{% endblock %}
+
+{% block title %}錄音器{% endblock %}
+
+{% block content %}
+
+<div>
+    <div style="float:left;width:50%;">
+        <h2>Record page</h2>
+        <p></p>
+        <h4>select a command list: </h4>
+        <select id="select_command" style="width:50%; font-size:20px" class="custom-select" aria-label="Default select example" onchange="change_command_list(this)">
+            <option selected value="1">Command List 1</option>
+            {% for i in range(command_files_count-1) %}
+                <option value="{{i+2}}">Command List {{i+2}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div style="float:left;">
+        <h4 style="font-weight:bold;"> name: </h4>
+        <h4 id="fill_name"></h4>
+        <h4 style="font-weight:bold;"> email: </h4>
+        <h4 id="fill_email"></h4>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+<div class="modal-dialog" role="document">
+    <div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" onclick="submit()" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">User Info</h4>
+    </div>
+    <div class="modal-body">
+        <div class="container-fluid">
+            
+        <input type="text" class="form-control" placeholder="Username" id="username" value="">
+        <p></p>
+        <input type="text" class="form-control" placeholder="Email" id="email" value="">
+              
+      </div>
+    </div>
+    <div class="modal-footer">
+        <!-- <button type="button" class="btn btn-default" data-dismiss="modal">Close</button> -->
+        <button type="button" class="btn btn-primary" onclick="submit()" data-dismiss="modal">submit</button>
+    </div>
+    </div>
+</div>
+</div>
+
+<table class="table" id='table' width="100%">
+    <thead><tr><th>ID</th><th width="40%">Command</th><th>Sample Sound</th><th>Record</th><th>Save</th><th>Playback</th></tr></thead>
+    <tbody>
+        <!-- {% for idx, command in commands %}
+            <tr>
+                <td class="name"><h4>{{ idx }}</h4></td>
+                <td class="command"><h4>{{ command }}</h4></td>
+                <td class="sample"><button class="btn btn-primary" onclick="get_wav(this)">Play </button></td>
+                <td class="record"><button class="btn btn-info" onclick="startRecord(this)">Record </button></td>
+                <td class="save"></td>
+                <td class="playback"><button disabled class="btn btn-success" onclick="get_playback(this)">Play </button></td>
+            </tr>
+            
+        {% endfor %} -->
+    </tbody>
+</table>
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    
+    let recordAudio;
+    let audioChunks = [];
+    let nowId = "None"
+
+    $('#myModal').modal({backdrop: 'static', keyboard: false})
+
+    function generateUUID() {
+        var d = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = (Math.random()*16)%16 | 0;
+            d = Math.floor(d/16);
+            return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+        });
+        return uuid;
+    };
+    ////
+    ////
+    ////  python check_userinfo 找save的機制可能不能寫在那
+    ////  submit後先讀command list id ，生成TABLE
+    ////  重選command list 可以重新生成table，save欄要重新計算
+    ////
+    ////
+    ////
+    ////
+
+    function change_command_list(select){
+        console.log('select command list : ' + select.value)
+        
+        let xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function(){
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                let response = xmlhttp.responseText;
+                let json = JSON.parse(response);
+                let commands = json['commands']
+                let table = document.getElementById('table');
+                
+                tablehtml = "<thead><tr><th>ID</th><th width=\"35%\">Command</th><th>Sample Sound</th><th width=\"5%\">Record</th><th>Save</th><th>Playback</th><th>Status</th></tr></thead>"
+                               
+                for (let idx in commands){
+                    //console.log(commands[idx][0])
+                    //console.log(commands[idx][1])
+                    //console.log(commands[idx][2])
+                    tablehtml += "<tr data-wavfile=" + commands[idx][2] + ">"; 
+                    tablehtml += "<td class=\"name\"><h4>" + commands[idx][0] + "</h4></td>"
+                    tablehtml += "<td style=\"font-family:monospace;\" class=\"command\"><h4>" + commands[idx][1] + "</h4></td>"
+                    tablehtml += "<td class=\"sample\"><button name=\"btn_play_sample\" class=\"btn btn-primary\" onclick=\"get_wav(this)\">Play </button></td>"
+                    tablehtml += "<td class=\"record\"><button name=\"btn_record\" class=\"btn btn-info\" onclick=\"startRecord(this)\">Record </button></td>"
+                    tablehtml += "<td class=\"save\"></td>"
+                    tablehtml += "<td class=\"playback\"><button name=\"btn_playback\" disabled class=\"btn btn-success\" onclick=\"get_playback(this)\">Play </button></td>"
+                    tablehtml += "</tr>";
+
+                }
+                table.innerHTML = tablehtml
+
+                check_save_command()
+
+            }
+        }
+        let url = {{ url_for('.get_command_list') | tojson }}
+        xmlhttp.open("POST", url);
+        xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xmlhttp.send(JSON.stringify({"command_list_id": select.value}));
+    }
+
+    function check_save_command(){
+        console.log("check save command")
+
+        let select = document.getElementById("select_command").value
+        let username = document.getElementById("fill_name").innerHTML;
+        let email = document.getElementById("fill_email").innerHTML;
+        let site = "{{ site }}"
+
+        let xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function(){
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                console.log('mark save command')
+                let response = xmlhttp.responseText;
+                let json = JSON.parse(response);
+                let commands = json['commands']
+                let table = document.getElementById('table');
+
+                for (let idx in commands){
+                    // console.log(commands[idx])
+                    if (commands[idx][2] == true){
+                        table.rows[parseInt(idx, 10)+1].cells[4].innerHTML = "<img src=\"{{url_for('.static', filename='green_tick.png')}}\" alt=\"\" border=3 height=30 width=30></img>"
+                        table.rows[parseInt(idx, 10)+1].cells[5].childNodes[0].disabled=false
+                    }else{
+                        table.rows[parseInt(idx, 10)+1].cells[4].innerHTML = "<img hidden src=\"{{url_for('.static', filename='green_tick.png')}}\" alt=\"\" border=3 height=30 width=30></img>"
+                    }
+
+                }
+            }
+        }
+        let url = {{ url_for('.check_save_command') | tojson }}
+        xmlhttp.open("POST", url);
+        xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xmlhttp.send(JSON.stringify({"username":username, "email": email, "site": site, "command_list_id":select}));
+    }
+
+    function submit(){
+        let username = document.getElementById("username").value;
+        let email = document.getElementById("email").value;
+        let site = "{{ site }}"
+
+        if (username == "" || username == null){
+            username = "anonymous"
+            email = "anonymous.abc.com"
+            // username = generateUUID()
+            // email = username
+        }
+
+        document.getElementById("fill_name").innerHTML = username;
+        document.getElementById("fill_email").innerHTML = email;
+
+        console.log("login name: " + username)
+        console.log("login email: " + email)
+
+        let xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function(){
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                let response = xmlhttp.responseText;
+                let json = JSON.parse(response);
+                let flag = json['flag']
+
+                console.log('user submit ' + flag)
+            }
+        }
+        let url = {{ url_for('.check_userinfo') | tojson }}
+        xmlhttp.open("POST", url);
+        xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xmlhttp.send(JSON.stringify({"username":username, "email": email, "site": site}));
+
+
+        let select = document.getElementById("select_command")
+        change_command_list(select)
+
+    }
+
+
+    function get_wav(element) {
+        
+        let wav_name = element.parentNode.parentNode.dataset.wavfile
+
+
+        $.ajax({
+            method:"POST",
+            url: {{ url_for('.get_sample') | tojson }},
+            data: {'wav_name' : wav_name},
+            success:function(data)
+            { 
+                console.log('Play Stadard Audio  ' + data.wav_name)
+                let snd = new Audio("data:audio/wav;base64, " + data.audio_data);
+                snd.play()
+
+            }
+        })
+    }
+
+    function get_playback(element) {
+        
+        let sampleId = element.parentNode.parentNode.cells[0].innerText
+        console.log(sampleId)
+        let site = "{{ site }}"
+        let email = document.getElementById("fill_email").innerText;
+
+        $.ajax({
+            method:"POST",
+            url: {{ url_for('.get_playback') | tojson }},
+            data: {'sampleId':sampleId, 'site':site, 'email':email},
+            success:function(data)
+            { 
+                console.log('Play Playback Audio  ' + data.email + '  ' + data.sampleId)
+                let snd = new Audio("data:audio/wav;base64, " + data.audio_data);
+                snd.play()
+
+            }
+        })
+    }
+
+    function startRecord(element){
+
+        element.className = "btn btn-danger"
+        element.innerHTML = "Stop"
+        nowId = element.parentNode.parentNode.cells[0].innerText
+        console.log(nowId)
+        element.onclick = function() { stopRecord(this); }
+        console.log('Start Record...')
+        //$("button[name=btn_play_sample]").attr("disabled", "disabled");
+        //$("button[name=btn_record]").attr("disabled", "disabled");
+        document.getElementsByName("btn_play_sample").forEach(e =>{
+            e.disabled = true;
+        });
+        document.getElementsByName("btn_record").forEach(e =>{
+            e.disabled = true
+        })
+        element.disabled=false
+        document.getElementsByName("btn_playback").forEach(e =>{
+            e.disabled = true;
+        });
+        // console.log(element.parentNode.parentNode.cells[4])
+        // console.log(element.parentNode.parentNode.cells[4].innerHTML)
+        element.parentNode.parentNode.cells[4].innerHTML = "<img src=\"{{url_for('.static', filename='recording_loading.gif')}}\" alt=\"\" border=3 height=30 width=30></img>"
+
+        navigator
+            .mediaDevices
+            .getUserMedia({audio: true})
+            .then(stream => { handlerFunction(stream) });
+
+        
+    }
+
+    function stopRecord(element){
+
+        element.className = "btn btn-info"
+        element.innerHTML = "Record"
+        element.onclick = function() { startRecord(this); }
+        console.log('Stop Record...')
+        //$("button[name=btn_play_sample]").removeAttr("disabled");
+        //$("button[name=btn_record]").removeAttr("disabled");
+        document.getElementsByName("btn_play_sample").forEach(e =>{
+            e.disabled = false
+        })
+        document.getElementsByName("btn_record").forEach(e =>{
+            e.disabled = false
+        })
+
+        recordAudio.stopRecording(stopRecordingCallback);
+        
+    }
+    function stopRecordingCallback() {
+        var blob = recordAudio.getBlob();
+        console.log(blob)
+        sendData(blob)
+     
+    }
+
+    function handlerFunction(stream) {
+        let options = {
+            mimeType: 'audio/wav'
+        }
+        recordAudio = RecordRTC(stream, {
+            type: 'audio',
+            desiredSampRate: 16000,
+            recorderType: StereoAudioRecorder,
+            numberOfAudioChannels: 1,
+        });
+
+        recordAudio.startRecording();
+    }
+
+    function sendData(blob) {
+        let username = document.getElementById("fill_name").innerHTML
+        let email = document.getElementById("fill_email").innerHTML
+        let select = document.getElementById("select_command").value
+        //Chrome inspector shows that the post data includes a file and a title.
+        let form = new FormData();
+        form.append('username', username);
+        form.append('email', email);
+        form.append('site', "{{ site }}");
+        form.append('commandlist_id', select)
+        form.append('nowid', nowId);
+        form.append('audio', blob);
+
+        $.ajax({
+            method:"POST",
+            url: {{ url_for('.save_record') | tojson }},
+            data: form,
+            processData: false,
+            contentType: false,
+            success:function(data)
+            { 
+                console.log(data.flag)
+                let commands = data.commands
+                let table = document.getElementById('table');;
+
+                for (let idx in commands){
+                    if (commands[idx][2] == true){
+                        table.rows[parseInt(idx, 10)+1].cells[4].innerHTML = "<img src=\"{{url_for('.static', filename='green_tick.png')}}\" alt=\"\" border=3 height=30 width=30></img>"
+                        table.rows[parseInt(idx, 10)+1].cells[5].childNodes[0].disabled=false
+                    }else{
+                        table.rows[parseInt(idx, 10)+1].cells[4].innerHTML = "<img hidden src=\"{{url_for('.static', filename='green_tick.png')}}\" alt=\"\" border=3 height=30 width=30></img>"
+                    }
+                }
+                
+            }
+        })
+    }
+    
+</script>
+{% endblock %}

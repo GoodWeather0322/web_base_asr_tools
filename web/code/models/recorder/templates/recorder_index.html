@@ -1,0 +1,39 @@
+{% extends "bootstrap/base.html" %}
+
+{% block metas %}
+{{ super() }}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+<link rel="shortcut icon" href="{{ url_for('.static', filename='favicon.ico') }}">
+{% endblock %}
+
+{% block title %}錄音器{% endblock %}
+
+{% block content %}
+
+<h2>recorder page</h2>
+
+<table class="table" id='table' width="20%">
+    <tbody>
+        {% for site in site_list %}
+            <tr>
+                <td><a href={{ site }}><h4>{{ site }}</h4></a></td>
+            </tr>
+            
+        {% endfor %}
+    </tbody>
+</table>
+
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    
+</script>
+{% endblock %}

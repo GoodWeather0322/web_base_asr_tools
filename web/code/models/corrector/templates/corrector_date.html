@@ -1,0 +1,195 @@
+{% extends "bootstrap/base.html" %}
+
+{% block metas %}
+{{ super() }}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+{% endblock %}
+
+{% block head %}
+  {{ super() }}
+    <style type="text/css">
+        table, th, td {
+            border: 1px solid black;
+            margin: 1px;
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block title %}聽寫date{% endblock %}
+
+
+
+{% block content %}
+
+{{ super() }}
+    <h1>聽寫date  {{ date }}</h1>
+    
+    <!-- <h2 id='ttt'>{{ date }}</h2> -->
+    <div style='width:70%;float:left;'>
+        <button id='counterBtn' onclick="start_timer()">開始標註</button> 
+        <div id="counter" style="font-size:20px">00:00:00.000</div>
+        
+        <table id='table' width="100%">
+            <thead><tr><th></th><th>name</th><th width="40%">text</th><th>wavfile</th><th width="40%">answer</th></tr></thead>
+            <tbody>
+                {% for name, text, correct, wav_file in datas %}
+                    <tr>
+                        <td class="index"><h4>{{ loop.index }}</h4></td>
+                        <td class="name"><h4>{{ name }}</h4></td>
+                        <td class="text">{{ text }}</td>
+                        <!-- <td>{{ wav_file }}</td> -->
+                        <td class="wav"><button onclick="get_wav(this, '{{ wav_file }}')">Play </button></td>
+                        <td class="answer" contenteditable='true' onblur="save_text()">{{ correct }}</td>
+                    </tr>
+                    
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+    <div style='width:5%;float:left;height:700px;'></div>
+    <div style='width:25%;float:left;height:700px;'>
+        Last Time Logs:
+        <table id='table' width="100%">
+            <thead><th>start</th><th>end</th>
+            <tbody>
+                {% for start, end in time_log %}
+                    <tr>
+                        <td>{{ start }}</td>
+                        <td>{{ end }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h4>Total Time : {{ total_time }}</h3>
+    </div>
+    
+
+    
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+    let counting = false;
+    let intervalid;
+    var btn = document.getElementById('counterBtn');
+
+    function updateCounter(){
+        let currentTime = Date.now();
+        let msecond = ("0" + (currentTime - startTime) % 1000).substr(-3, 3);
+        let counter = Math.floor((currentTime - startTime)/1000);
+        let hour = ("0" + Math.floor(counter / 3600)).substr(-2, 2);
+        let minute = ("0" + Math.floor((counter % 3600) / 60)).substr(-2, 2);
+        let second = ("0" + Math.floor(counter % 60)).substr(-2, 2);
+        document.getElementById('counter').textContent = `${hour}:${minute}:${second}.${msecond}`;
+    }
+    function start_timer(){
+        if (counting){
+            endTime = Date.now();
+            $.ajax({
+                method:"POST",
+                url: {{ url_for('.save_time_record') | tojson }},
+                data: {'site':"{{ site }}", 'date':"{{ date }}", 'flag':'end', 'time':endTime},
+                success:function(data)
+                { 
+                    console.log(data.flag)
+                }
+            })
+
+            clearInterval(intervalid);
+        } else{
+            startTime = Date.now();
+            $.ajax({
+                method:"POST",
+                url: {{ url_for('.save_time_record') | tojson }},
+                data: {'site':"{{ site }}", 'date':"{{ date }}", 'flag':'start', 'time':startTime},
+                success:function(data)
+                { 
+                    console.log(data.flag)
+                }
+            })
+            intervalid = setInterval(updateCounter, 15)
+        }
+
+        counting = !counting;
+        btn.textContent = counting ? '停止標註' : '開始標註';
+    }
+
+    function get_wav(ee, wav_file) {
+        console.log(wav_file)
+        let text = $(ee).closest("tr").find("td:eq(2)").text();
+        console.log(text)
+        if ($(ee).closest("tr").find("td:eq(4)").text() == ''){
+            $(ee).closest("tr").find("td:eq(4)").text(text)
+        }
+
+        save_text()
+
+        $.ajax({
+            method:"POST",
+            url: {{ url_for('.get_byte') | tojson }},
+            data: {'wav_file' : wav_file},
+            success:function(data)
+            { 
+                // console.log('123123')
+                // console.log(data.audio_data)
+                let snd = new Audio("data:audio/wav;base64, " + data.audio_data);
+                snd.play()
+            }
+        })
+    }
+
+    function save_text(){
+        console.log('trigger save correct text')
+        var table = document.getElementById('table');
+
+        let array = []
+        // LOOP THROUGH EACH ROW OF THE TABLE AFTER HEADER.
+        for (i = 1; i < table.rows.length; i++) {
+
+            // GET THE CELLS COLLECTION OF THE CURRENT ROW.
+            var objCells = table.rows.item(i).cells;
+            array.push([objCells.item(1).innerText, objCells.item(4).innerText])
+
+        }
+        console.log("{{ date }}")
+
+        $.ajax({
+            method:"POST",
+            url: {{ url_for('.save_text') | tojson }},
+            data: {'site':"{{ site }}", 'date':"{{ date }}", 'array':JSON.stringify(array)},
+            success:function(data)
+            { 
+                console.log(data.flag)
+            }
+        })
+    }
+
+    window.addEventListener('beforeunload', function (e) {
+        e.preventDefault();
+        e.returnValue = '';
+
+        save_text()
+        
+        endTime = Date.now();
+        $.ajax({
+            method:"POST",
+            url: {{ url_for('.save_time_record') | tojson }},
+            data: {'site':"{{ site }}", 'date':"{{ date }}", 'flag':'end', 'time':endTime},
+            success:function(data)
+            { 
+                console.log(data.flag)
+            }
+        })
+
+        clearInterval(intervalid);
+    });
+
+</script>
+{% endblock %}
